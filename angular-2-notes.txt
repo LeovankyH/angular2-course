@@ -1,0 +1,937 @@
+angular cli
+-allows us to skip writing a build tool and gives all angular apps a common structure so when we look at someone else angular 2 app we know where a file should be
+
+once installed we can use it to bootstrap our application.
+
+angular-cli comes with native commands
+like serve: ng serve (serves at localhost:4200)
+
+1. ng new AppName
+2. cd AppName
+3 ng serve
+
+--at this point our app is running.
+
+lets look through the directories:
+
+- most of the time is spent in /src
+- e2e = end to end, for testing
+
+-src/index.html
+ * theres an <app-root> tag. this is a custom tag,
+ * app-root is located in app.component.ts file
+ * that file defines the functinoality it wonts to happen when it sees the tag 'app-root'
+
+ lets talk components
+ ===
+ * a component is: directives, controllers, and scope all mashed into the same thing (if you know angular 1).
+
+ * you may do bracket templating for dynamic data using brackets {{ }}:
+
+ ```
+@Component({
+  selector: 'app-root',
+  template: `
+  <h1>Hello {{ title }}</h1>
+  `,
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  title = 'app works!';
+}
+ ```
+
+ * as you see, 'title' matches to the title variable defined in the AppComponent class.
+
+
+ LETS TALK ABOUT TYPESCRIPT
+ ====
+ * first we use es6 imports to import the component decorator....very familiar to React.
+* notice how we also have exported AppComponent after we have defined it.
+* @component = decorator...we know this because it name is prefixed by the '@' sign.
+* a decorater is just a function that accepts an arg of whatever follows it, the decorator decorates whatever follows it. in this case its decorating 'AppComponent.'
+* it itself an arg, which is an object which allows us to declare the selector, its template, and so on.
+* at its heart, a decorator just needs a 'selector' for a tag defintion and 'template' for what should render in place of that tag.
+
+
+
+Lets chat about what we'll build.
+====
+blah blah do it on paper first.
+
+
+* to build our app, we'll write all functionality inside App.component.ts file, that way we can look through our components without jumping into multiple files. so we'll keep everything together.
+
+* so we wrote all the html in our app.component template property inside the @Component decorator.
+
+
+Building the sidebar component:
+=====
+now we'll break up sidebar and content:
+
+```
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-sidebar',
+  template: `
+   <div id="sidebar">
+    Sidebar will go here.
+   </div>
+  `
+})
+
+class SidebarComponent {}
+
+@Component({
+  selector: 'app-root',
+  template: `
+       <div id="container">
+          <div id="content">
+             <div>
+                Article List will go here.
+             </div>
+          </div>
+       </div>
+  `,
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  title = 'app works!';
+}
+
+```
+
+^ looks good, but now we should include `app-sidebar` into `app-root` using a custom tag `<app-sidebar>`.
+
+* IMPORTANT: we're running into an error afterwards where our app DOES NOT KNOW where app-sidebar lives....so we need to declare the component inside our app's components module, app.module.ts file....this declares all the components that live in this app.
+
+
+so in `app.component.ts`:
+
+1.we first have to export the Sidebar component clas in our app.component.ts file
+
+`export class SidebarComponent {}`
+
+2. then we have to import the Sidebar component in app.module.ts, and then include it in our module declarations:
+
+```
+import { AppComponent, SidebarComponent } from './app.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    SidebarComponent
+  ],
+```
+
+Nice! so it works now and Sidebar Component is a child of our 'app-root' component
+
+* Angular treats components in a hierarchy just like html DOM does hierarchy.
+
+^ very similiar in terms of react.
+
+
+
+lets work with more dynamic data
+===================================
+
+*lets create a component that will have static data now, but dynamic data later.
+
+```
+@Component({
+  selector: 'app-article',
+  template: `
+   <div>Article will go here.</div>
+  `
+})
+export class ArticleComponent {}
+```
+
+and include it in component module (app.module.ts):
+```
+import { AppComponent, SidebarComponent, ArticleComponent } from './app.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    SidebarComponent,
+    ArticleComponent
+  ],
+```
+
+and include it in our parent component via custom tag `<app-article></app-article>`
+
+```
+@Component({
+  selector: 'app-root',
+  template: `
+       <div id="container">
+          <app-sidebar></app-sidebar>
+          <div id="content">
+            <app-article></app-article>
+            <app-article></app-article>
+            <app-article></app-article>
+            <app-article></app-article>
+            <app-article></app-article>
+          </div>
+       </div>
+  `,
+```
+
+
+
+data-driving our UI:
+====
+before we work with dynamic data, we need to declare a variable and pass it in during run-time:
+
+we'll make the articles dynamic, but first lets declare this variable:
+
+```
+export class AppComponent {
+  article: Object;
+}
+```
+
+now we'll also include our instructor inside this class, and of course since constructors construct our class, theyre the first function to be run inside of a class.
+
+```
+export class AppComponent {
+  article: Object;
+
+  constructor() {
+     this.article = {
+        title: 'The Angular 2 Screencast',
+        description: 'The easiest way to learn Angular 2 is with fullstack.io!'
+     };
+  }
+}
+```
+
+
+
+we need to pass this instance object (this.article) to the article itself...we'll do this inside the tag itself. we'll define an input on the article, and we'll call the input using these brackets [], and then pass it the object 'article' by placing this inside the brackets.
+
+```
+<app-article
+   [article]="article"></app-article>
+```
+
+
+In order to define it as an Input, we have to say that this <app-article> component is going to accept and is expecting an input. To do this we have to:
+
+1. Import the Input decorator from Angular Core
+`import { Component, Input } from '@angular/core';`
+
+2. in the export of ArticleComponent, we'll say that we're expecting this input
+```
+export class ArticleComponent {
+   @Input('article') article: Object;
+}
+```
+
+
+^ THIS IS THE FIRST CONFUSING THING I'VE RUN INTO SO FAR IN THIS COURSE. 29mins-31mins
+I understand tat we're passing the Object 'article' into the html, but the 'Input' decorator and brackets attributes in the html? I have no clue????
+
+
+[] - states that its an input
+[article] -inside the bracket says hey im talking about this thing in the constructor
+
+
+
+works, but dont see any dynamic data yet?????
+we need to define our html and the content within our html (which will be our article content) inside of our 'app-article' @Component:
+
+```
+   @Component({
+     selector: 'app-article',
+     template: `
+      <div>
+         <h2>{{ article.title }}</h2>
+      </div>
+     `
+   })
+```
+
+
+works, but we're getting errors because we have 5 instances of `<app-article>` but are only using one. lets remove the unused ones and run again, which results in no errors!!!!
+
+
+^ this is cool because it allows you to wire up data instead of hardcoding. I'll definitely be using this for the prototype, hands down.
+
+
+Introducing NG-for
+================================================================
+so we can show a single article, but how can we show multiple ones?
+
+first we'll go to our AppComponent class export, and change articles from an object to a list of objects using the brackets [] notation:
+
+FROM
+```
+export class AppComponent {
+  article: Object;
+
+  constructor() {
+     this.article = {
+        title: 'The Angular 2 Screencast',
+        description: 'The easiest way to learn Angular 2 is with fullstack.io!'
+     };
+  }
+}
+```
+
+TO
+```
+export class AppComponent {
+  article: Object[];
+
+  constructor() {
+      this.article = [{
+         title: 'The Angular 2 Screencast',
+         description: 'The easiest way to learn Angular 2 is with fullstack.io!'
+      },{
+         title: 'Fullstack React',
+         description: 'Want to learn React too?'
+      }, {
+         title: 'Vue is new',
+         description: 'And pretty cool syntax to!'
+      }, {
+         title: 'The Angular 2 Screencast',
+         description: 'The easiest way to learn Angular 2 is with fullstack.io!'
+     }, {
+         title: 'But what about Elm',
+         description: 'Everybody likes Elm...right?'
+     }];
+  }
+}
+```
+now we get an error because we've changed the 'article' which is called via `[article]="article"` in the html AND as this.articles = {} in the constructor...we've changed it from an object to an array of objects, so how do we get these into the view?
+
+so instead of using a single article, we need to use the ng-for directive to iterate over and grab all of them:
+
+```
+<div id="content">
+   <app-article
+   *ngFor="let article of articles"
+      [article]="article"></app-article>
+ </div>
+```
+
+ngFor allows us to create a local variable called 'article', and basically does a forEach method so for each object in the 'articles' array, it puts out `<app-article>`elements with the listed titles. Lets look at the code in its entirety right now before moving forward:
+
+```
+import { Component, Input } from '@angular/core';
+
+@Component({
+  selector: 'app-sidebar',
+  template: `
+   <div id="sidebar">
+    Sidebar will go here.
+   </div>
+  `
+})
+export class SidebarComponent {}
+
+   @Component({
+     selector: 'app-article',
+     template: `
+      <div>
+         <h2>{{ article.title }}</h2>
+      </div>
+     `
+   })
+   export class ArticleComponent {
+      @Input('article') article: Object;
+   }
+
+@Component({
+  selector: 'app-root',
+  template: `
+       <div id="container">
+          <app-sidebar></app-sidebar>
+          <div id="content">
+            <app-article
+            *ngFor="let article of articles"
+               [article]="article"></app-article>
+          </div>
+       </div>
+  `
+})
+
+export class AppComponent {
+  articles: Object[];
+
+  constructor() {
+      this.articles = [{
+         title: 'The Angular 2 Screencast',
+         description: 'The easiest way to learn Angular 2 is with fullstack.io!'
+      },{
+         title: 'Fullstack React',
+         description: 'Want to learn React too?'
+      }, {
+         title: 'Vue is new',
+         description: 'And pretty cool syntax to!'
+      }, {
+         title: 'The Angular 2 Screencast',
+         description: 'The easiest way to learn Angular 2 is with fullstack.io!'
+     }, {
+         title: 'But what about Elm',
+         description: 'Everybody likes Elm...right?'
+     }];
+  }
+}
+
+```
+
+
+NICE!!!!
+
+^ so far the syntax is a bit weird for pushing stuff into the view via the Input decorator, and the '*ngFor=' syntax is strange...but things are making sense.
+
+
+Article Model
+========================================
+we're currently using JS objects as instances. this stuff ^ is great if we just want to show our data, but often we want to change data, add methods to our data, etc.
+
+using typescript allows us to define a 'model' pretty quickly...what is that???
+
+lets update our implementation from using JS object to using a model
+
+
+in order to use a model, we first have to create a model class:
+
+
+```
+class Article {
+   public title: string;
+   public description: string;
+
+   constructor(
+      aTitle: string,
+      aDescription: string,
+   ) {
+      this.title = aTitle;
+      this.description = aDescription;
+   }
+}
+```
+
+we also have a 2nd way of defining our attributes on a model:
+
+we can do all of the above in the same step:
+```
+class Article {
+   constructor(
+      public title: string;
+      public description: string;
+   ) { }
+}
+```
+
+^ Angular will generally look at this and transform it in the background to the first option...this just helps us write less boilerplate code.
+
+
+
+Now lets update our Implementation to use this Article model instead of a plain JS object:
+
+FROM
+```
+export class AppComponent {
+  articles: Object[];
+```
+
+TO
+```
+export class AppComponent {
+  articles: Article[];
+```
+
+
+^ this will throw an error because we're not using an instance of the class 'Article' to create these articles (they're just objects within the constructor). so lets change them from creating an object to a new instance of 'Article':
+
+
+FROM
+```
+constructor() {
+   this.articles = [{
+      title: 'The Angular 2 Screencast',
+      description: 'The easiest way to learn Angular 2 is with fullstack.io!'
+   },{
+      title: 'Fullstack React',
+      description: 'Want to learn React too?'
+   },
+```
+
+TO
+```
+constructor() {
+   this.articles = [
+   new Article(
+      'The Angular 2 Screencast',
+      'The easiest way to learn Angular 2 is with fullstack.io!'
+   ),new Article(
+      title: 'Fullstack React',
+      description: 'Want to learn React too?'
+   ),
+```
+
+
+so lets take a look at the existing export of AppComponent:
+
+```
+export class AppComponent {
+  articles: Article[];
+
+  constructor() {
+      this.articles = [
+         new Article(
+            'The Angular 2 Screencast',
+            'The easiest way to learn Angular 2 is with fullstack.io!'
+         ),
+         new Article(
+            'Fullstack React',
+            'Want to learn React too?'
+         ),
+         new Article(
+            'Vue is new',
+            'And pretty cool syntax to!'
+         ),
+         new Article(
+            'The Angular 2 Screencast',
+            'The easiest way to learn Angular 2 is with fullstack.io!'
+         ),
+         new Article(
+            'But what about Elm',
+            'Everybody likes Elm...right?'
+        )
+     ];
+  }
+}
+```
+
+last thing:
+
+we now change our ArticleComponent export @Input decorator from being an Object to being an instance of Article:
+
+FROM
+```
+export class ArticleComponent {
+   @Input('article') article: Object;
+}
+```
+
+
+TO
+```
+export class ArticleComponent {
+   @Input('article') article: Article;
+}
+```
+
+
+we can even shorten this by removing the 'article' argument since it is already declared in the key/value pair...to this:
+
+```
+export class ArticleComponent {
+   @Input() article: Article;
+}
+```
+
+^ this will allow us to call methods() on our Article...if not it would just look for an object.
+
+
+Adding in semantic-ui
+=================================================
+
+
+add this: `npm install semantic-ui-css jquery --save`
+
+now add it to your project via the `angular-cl.json` file:
+
+ALSO! the angular-cli.json file is how the angular server is configured, and injects the styles and scripts into the page before it loads:
+
+
+```
+"styles": [
+   "../node_modules/semantic-ui-css/semantic.css",
+  "styles.css"
+],
+"scripts": [
+   "../node_modules/jquery/dist/jquery.js",
+   "../node_modules/semantic-ui-css/semantic.js"
+],
+```
+
+lets run ng serve again
+
+
+
+
+formatting data with pipes
+====================================
+
+currently, we have the time set to "today" staticly:
+
+EX:
+
+```
+ @Component({
+     selector: 'app-article',
+     template: `
+      <div class="image">
+         <img src='https://placekitten.com/g/400/300'>
+      </div>
+      <div class="content">
+         <div class="header">
+            {{ article.header }}
+         </div>
+         <div class="meta">
+            Voting and votes will go here
+         </div>
+         <div class="meta date">  //SEE!!!!
+            Today
+         </div>
+```
+
+now what if we want an actual timestamp?  we can do that within our 'Article' class:
+```
+class Article {
+   constructor(
+      public title: string,
+      public description: string
+   ) { }
+
+   //lets pretend we have a 'published at' date
+   public date(): Date {
+      return new Date();
+   }
+}
+```
+
+and then replace "Today" with the generated date in JS:
+```
+<div class="meta date">
+   {{ article.date() }}
+</div>
+```
+
+it renders a looooong date string, and maybe we wanna clean it up, yea? this is where PIPES come in. PIPES are a lot like filters if you remember angular 1 (|), and theyre used to parse and display data for a view.
+
+we use PIPES everywhere in angular 2...some are built-in, like date:
+
+```
+<div class="meta date">
+   {{ article.date() | date }}
+</div>
+```
+
+and we could go further in our PIPE here:
+```
+<div class="meta date">
+   {{ article.date() | date:'medium' }}
+</div>
+```
+
+
+
+Adding User interaction/voting
+=================================================
+
+in our app, we'll introduce an upvote/downvote feature....
+
+lets add a property to our "Article" class called 'Votes' which will be te total number of votes for the article....
+
+```
+class Article {
+   constructor(
+      public title: string,
+      public description: string,
+      public votes?: number //we need to make it optional, in typescript we use ? to do this
+   ) {
+      this.votes = votes || 0;
+   }
+
+```
+
+^ so we make the 'votes' property optional with the '?' character and then set it to its own value OR 0 if it has no votes.
+
+
+now lets create the html for the up/downvoting feature:
+
+```
+<div class="meta">
+   <span class="ui blue small label">
+      <i class="heart icon"></i>
+      <div class="detail">
+         {{ article.votes }}
+      </div>
+   </span>
+</div>
+```
+
+
+Now if we refresh the page we see the html is rendered and everything is set to 0 votes...NICE!!!!!!
+
+
+
+now if we go into the constructor and set an article to '10' for example, it will display 10 instead of 0:
+
+```
+export class AppComponent {
+  articles: Article[];
+
+  constructor() {
+      this.articles = [
+         new Article(
+            'The Angular 2 Screencast',
+            'The easiest way to learn Angular 2 is with fullstack.io!',
+            10
+         ),
+```
+
+now lets make the upvote feature work for users upvoting stuff. first add the buttons in the view:
+```
+<div class="meta">
+      <span class="ui blue small label">
+         <i class="heart icon"></i>
+         <div class="detail">
+            {{ article.votes }}
+         </div>
+      </span>
+      <span class="ui right floated">
+         <a class="ui small label">
+            <i class="arrow up icon"></i>
+            Upvote
+         </a>
+         <a class="ui small label">
+            <i class="arrow down icon"></i>
+            Downvote
+         </a>
+      </span>
+   </div>
+```
+
+looks good..now lets hook it up with event handlers!!!
+
+```
+<span class="ui right floated">
+   <a
+   (click)="upvote()"
+   class="ui small label">
+      <i class="arrow up icon"></i>
+      Upvote
+   </a>
+   <a
+   (click)="downvote()"
+    class="ui small label">
+      <i class="arrow down icon"></i>
+      Downvote
+   </a>
+</span>
+```
+
+so within the ArticleComponent export, we'll define these handlers....
+```
+export class ArticleComponent {
+   @Input( ) article: Article;
+
+   upvote() {
+      console.log("Called upvote fun");
+   }
+
+   downvote() {
+      console.log("Called downvote fun");
+   }
+}
+```
+
+
+^ looks good! now lets put in the functionality:
+```
+export class ArticleComponent {
+   @Input( ) article: Article;
+
+   upvote() {
+      this.article.voteUp();
+   }
+
+   downvote() {
+      this.article.voteDown();
+   }
+}
+```
+
+now we have to define this functions inside the article class:
+
+```
+class Article {
+   constructor(
+      public title: string,
+      public description: string,
+      public votes?: number //we need to make it optional, in typescript we use ? to do this
+   ) {
+      this.votes = votes || 0;
+   }
+
+   //lets pretend we have a 'published at' date
+   public date(): Date {
+      return new Date();
+   }
+
+   public voteUp(): void {
+      this.votes = this.votes + 1;
+   }
+
+   public voteDown(): void {
+      this.votes = this.votes - 1;
+   }
+}
+```
+
+nice! so it works!!!!
+
+
+lets run through one more time how event handlers are working here:
+1. first we define it in the html via `<a (click)=upvote()`
+2. then we define it in our class export like:
+   ```
+   upvote() {
+      this.article.voteUp();
+   }
+   ```
+3. then we define the actual functionality within our Article class:
+   ```
+   public voteUp(): void {
+      this.votes = this.votes + 1;
+   }
+   ```
+
+
+3 step process for an event handler, but thats how Angular 2 does it. not bad at all.....really feel like im getting the hang of this stuff. just need to learn more about the @Input decorator.
+
+================================================
+
+lets make the Date a property instead of a method...we dont need a new date everytime, we just need a single timestamp:
+
+```
+class Article {
+   public publishedAt: Date();
+   constructor(
+      public title: string,
+      public description: string,
+      public votes?: number //we need to make it optional, in typescript we use ? to do this
+   ) {
+      this.votes = votes || 0;
+      this.publishedAt = new Date();
+   }
+
+   //lets pretend we have a 'published at' date
+   public date(): Date {
+      return new Date();
+   }
+```
+
+
+now delete the date() method at the bottom
+```
+class Article {
+   public publishedAt: Date();
+
+   constructor(
+      public title: string,
+      public description: string,
+      public votes?: number //we need to make it optional, in typescript we use ? to do this
+   ) {
+      this.votes = votes || 0;
+      this.publishedAt = new Date();
+   }
+```
+
+now change the html:
+```
+<div class="meta date">
+   {{ article.publishedAt | date }}
+</div>
+```
+
+
+
+Generating Components with Angular CLI
+================================================================================
+so our app.component.ts file is getting super large, and we can begin to break components into their own component files. It turns out with Angular CLI, we can generate components...
+
+`ng generate component componentName`
+
+^ this creates a css file, html file, typescript file, and 'spec' typescript file (for testing) for each component.
+
+so we'll run these:
+
+`ng generate component sidebar`
+`ng generate component article`
+
+REALLY INTERESTING: ANGULAR CLI is actually pulling in these created components into `app.module.ts` for you:
+```
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { HttpModule } from '@angular/http';
+
+import {
+   AppComponent,
+   SidebarComponent,
+   ArticleComponent
+} from './app.component';
+import { SidebarComponent } from './sidebar/sidebar.component';
+import { ArticleComponent } from './article/article.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    SidebarComponent,
+    ArticleComponent,
+    SidebarComponent,
+    ArticleComponent
+  ],
+  imports: [
+    BrowserModule,
+    FormsModule,
+    HttpModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+```
+
+^ lets update this to reduce any redundancies:
+```
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { HttpModule } from '@angular/http';
+
+import { AppComponent } from './app.component';
+import { SidebarComponent } from './sidebar/sidebar.component';
+import { ArticleComponent } from './article/article.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    SidebarComponent,
+    ArticleComponent
+  ],
+  imports: [
+    BrowserModule,
+    FormsModule,
+    HttpModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+```
+
+
